@@ -1,4 +1,5 @@
 const { Telegraf } = require('telegraf');
+const express = require('express');
 const TelegramClient = require('./telegram-client');
 
 // const botToken = '7362076889:AAGBuX6ceu0q3O1lRhv5e5aM89kw0pOZ9E0';
@@ -40,3 +41,14 @@ function log(...params) {
   bot.launch();
   console.log('Bot is running...');
 })();
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.send('Hello, World!');
+});
+
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
+});
