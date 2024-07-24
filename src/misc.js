@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const fsExtra = require('fs-extra');
 
 const delay = (ms) => new Promise((resolve) => {
   setTimeout(resolve, ms);
@@ -61,10 +62,32 @@ async function unlinkFile(filePath) {
   });
 }
 
+const deleteOldFiles = async (downloadsDir, hours = 24) => {
+  try {
+    const files = await fsExtra.readdir(downloadsDir);
+    console.log('Found files: ', files.length);
+
+    const currentTime = Date.now();
+
+    for (const file of files) {
+      const filePath = path.join(downloadsDir, file);
+      const stats = await fsExtra.stat(filePath);
+
+      if (currentTime - stats.birthtimeMs > hours * 60 * 60 * 1000) {
+        await fsExtra.remove(filePath);
+        console.log(`Deleted: ${filePath}`);
+      }
+    }
+  } catch (err) {
+    console.error(`Error: ${err.message}`);
+  }
+};
+
 module.exports = {
   delay,
   shortText,
   writeFileWithMkDir,
   pathExists,
   unlinkFile,
+  deleteOldFiles,
 };

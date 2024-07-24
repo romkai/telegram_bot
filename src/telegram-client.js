@@ -2,7 +2,7 @@ require('dotenv').config();
 const MTProto = require('@mtproto/core');
 const path = require('path');
 const prompts = require('prompts');
-const { writeFileWithMkDir } = require('./misc');
+const { writeFileWithMkDir, deleteOldFiles } = require('./misc');
 // const fs = require('fs');
 
 const api_id = process.env.API_ID;
@@ -15,9 +15,14 @@ class TelegramClient {
 
   emit = null;
 
+  timer = null;
+
   constructor(emitFunc) {
     this.emit = emitFunc;
     this.mtproto = new MTProto({ api_id, api_hash, storageOptions: { path: session_path } });
+    this.timer = setInterval(() => {
+      deleteOldFiles(downloads_path, 1);
+    }, 60000);
   }
 
   static async inputPhoneNumber() {
