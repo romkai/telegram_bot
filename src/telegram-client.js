@@ -1,13 +1,14 @@
 require('dotenv').config();
 const MTProto = require('@mtproto/core');
 const path = require('path');
-const fs = require('fs');
 const prompts = require('prompts');
+const { writeFileWithMkDir } = require('./misc');
+// const fs = require('fs');
 
 const api_id = process.env.API_ID;
 const api_hash = process.env.API_HASH;
-const session_path = path.join(__dirname, './config/session.json');
-// const downloads_path = path.join('config', 'session.json');
+const session_path = path.join(__dirname, '..', 'config', 'session.json');
+const downloads_path = path.join(__dirname, '..', 'downloads');
 
 class TelegramClient {
   mtproto = null;
@@ -91,6 +92,7 @@ class TelegramClient {
   }
 
   async downloadFile(inputLocation, filePath) {
+    console.log('path: ', filePath);
     let offset = 0;
     let buffer = Buffer.alloc(0);
     while (true) {
@@ -103,7 +105,7 @@ class TelegramClient {
       offset += response.bytes.length;
       if (response.bytes.length < 1048576) break;
     }
-    fs.writeFileSync(filePath, buffer);
+    await writeFileWithMkDir(filePath, buffer);
   }
 
   async extractDataFromMessage(channelUsername, messageId) {
@@ -132,9 +134,9 @@ class TelegramClient {
 
     const message = messagesResult.messages[0];
 
-    const responseFile = path.resolve('downloads', 'main-message.json');
-    console.log(responseFile);
-    fs.writeFileSync(responseFile, JSON.stringify(message, undefined, 2));
+    // const responseFile = path.resolve('downloads', 'main-message.json');
+    // console.log(responseFile);
+    // await writeFileWithMkDir(responseFile, JSON.stringify(message, undefined, 2));
 
     const { grouped_id } = message;
 
@@ -153,8 +155,8 @@ class TelegramClient {
       });
 
       this.emit('Запрошено', history.messages.length);
-      const rrr = path.resolve('downloads', 'grouped.json');
-      fs.writeFileSync(rrr, JSON.stringify(history.messages, undefined, 2));
+      // const rrr = path.resolve('downloads', 'grouped.json');
+      // fs.writeFileSync(rrr, JSON.stringify(history.messages, undefined, 2));
       allMessages = history.messages.filter((x) => x.grouped_id === grouped_id);
       this.emit('Найдено сообщений в группе: ', allMessages.length);
     }
@@ -190,7 +192,7 @@ class TelegramClient {
         thumb_size: 'y',
       };
 
-      const photoPath = path.join('downloads', `${message.id}_photo.jpg`);
+      const photoPath = path.join(downloads_path, `${message.id}_photo.jpg`);
       await this.downloadFile(inputLocation, photoPath);
 
       return { type: 'photo', media: { source: photoPath }, caption: '' };
@@ -206,7 +208,7 @@ class TelegramClient {
       };
 
       const documentExtension = path.extname(document.attributes.find((attr) => attr._ === 'documentAttributeFilename').file_name);
-      const videoPath = path.join('downloads', `${message.id}_video${documentExtension}`);
+      const videoPath = path.join(downloads_path, `${message.id}_video${documentExtension}`);
       await this.downloadFile(documentInputLocation, videoPath);
 
       return { type: 'video', media: { source: videoPath }, caption: '' };
