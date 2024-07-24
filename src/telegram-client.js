@@ -8,7 +8,7 @@ const { writeFileWithMkDir, deleteOldFiles } = require('./misc');
 const api_id = process.env.API_ID;
 const api_hash = process.env.API_HASH;
 const session_path = path.join(__dirname, '..', 'config', 'session.json');
-const downloads_path = path.join(__dirname, '..', 'downloads');
+const downloads_path = path.join(__dirname, 'downloads');
 
 class TelegramClient {
   mtproto = null;
