@@ -9,11 +9,31 @@ function log(...params) {
   console.log(...params);
 }
 
+const userStats = {};
+
+function updateUserStats(name) {
+  if (userStats[name]) {
+    userStats[name] += 1;
+  } else {
+    userStats[name] = 1;
+  }
+}
+
+function showUserStats() {
+  console.log('STATS ---------------------------------');
+  Object.keys(userStats).forEach((k) => {
+    console.log(`${k}: ${userStats[k]}`);
+  });
+}
+
 (async () => {
   const bot = new Telegraf(botToken);
   const client = new TelegramClient(log);
-  bot.start((ctx) => ctx.reply('Привет! Отправьте мне ссылку на сообщение в Telegram-канале.'));
+  bot.start((ctx) => ctx.reply('Hello! Send me a link to a message in a Telegram channel'));
   bot.on('text', async (ctx) => {
+    const username = ctx.from.username ? `@${ctx.from.username}` : '<noname>';
+    updateUserStats(username);
+
     const messageLink = ctx.message.text;
     const regex = /https:\/\/t\.me\/(\w+)\/(\d+)/;
     const match = messageLink.match(regex);
@@ -22,7 +42,7 @@ function log(...params) {
       const messageId = parseInt(match[2], 10);
       console.log({ channel, messageId });
       try {
-        ctx.reply('Минуточку, идет получение данных...');
+        ctx.reply('One moment, retrieving data...');
         const { message, sources } = await client.extractDataFromMessage(channel, messageId);
         if (message) {
           ctx.reply(message);
@@ -30,12 +50,13 @@ function log(...params) {
         if (sources.length > 0) {
           await ctx.replyWithMediaGroup(sources);
         }
+        showUserStats();
       } catch (error) {
         console.error('Failed to extract data from message:', error);
-        ctx.reply('Не удалось получить содержимое сообщения. Проверьте правильность ссылки.');
+        ctx.reply('Failed to retrieve the message content. Please check the link\'s accuracy');
       }
     } else {
-      ctx.reply('Отправьте корректную ссылку на сообщение в Telegram-канале.');
+      ctx.reply('Please send a valid link to a message in a Telegram channel');
     }
   });
   bot.launch();
